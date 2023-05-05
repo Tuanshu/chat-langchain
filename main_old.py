@@ -19,12 +19,13 @@ vectorstore: Optional[VectorStore] = None
 
 @app.on_event("startup")
 async def startup_event():
-    logging.info("loading vectorstore")
-    if not Path("vectorstore.pkl").exists():
-        raise ValueError("vectorstore.pkl does not exist, please run ingest.py first")
-    with open("vectorstore.pkl", "rb") as f:
-        global vectorstore
-        vectorstore = pickle.load(f)
+    # logging.info("loading vectorstore")
+    # if not Path("vectorstore.pkl").exists():
+    #     raise ValueError("vectorstore.pkl does not exist, please run ingest.py first")
+    # with open("vectorstore.pkl", "rb") as f:
+    #     global vectorstore
+    #     vectorstore = pickle.load(f)
+    pass
 
 
 @app.get("/")
@@ -55,7 +56,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.send_json(start_resp.dict())
 
             result = await qa_chain.acall(
-                {"input": question, "chat_history": chat_history}
+                {"question": question, "chat_history": chat_history}
             )
             chat_history.append((question, result["answer"]))
 

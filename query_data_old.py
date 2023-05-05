@@ -5,18 +5,8 @@ from langchain.chains import ChatVectorDBChain
 from langchain.chains.chat_vector_db.prompts import CONDENSE_QUESTION_PROMPT, QA_PROMPT
 from langchain.chains.llm import LLMChain
 from langchain.chains.question_answering import load_qa_chain
-from langchain.llms import LlamaCpp
+from langchain.llms import OpenAI
 from langchain.vectorstores.base import VectorStore
-
-from prompt import prompt
-
-kwargs = {"model_path": "C:/tuanshu/languege_models/gpt4all/gpt4all-lora-quantized-ggml.bin",
-          # "model_path": "C:/tuanshu/languege_models/vicuna-13B-1.1-GPTQ-4bit-128g-GGML/vicuna-13B-1.1-GPTQ-4bit-128g.GGML.bin",
-          "verbose": True,
-          "n_ctx": 2048,
-          "max_tokens": 1024,
-          "seed": 17,
-          "streaming": True}
 
 
 def get_chain(
@@ -35,21 +25,29 @@ def get_chain(
         question_manager.add_handler(tracer)
         stream_manager.add_handler(tracer)
 
-    question_gen_llm = LlamaCpp(
-        callback_manager=question_manager, **kwargs,
+    question_gen_llm = OpenAI(
+        temperature=0,
+        verbose=True,
+        callback_manager=question_manager,
+    )
+    streaming_llm = OpenAI(
+        streaming=True,
+        callback_manager=stream_manager,
+        verbose=True,
+        temperature=0,
     )
 
     question_generator = LLMChain(
-        llm=question_gen_llm, prompt=prompt, callback_manager=manager,
+        llm=question_gen_llm, prompt=CONDENSE_QUESTION_PROMPT, callback_manager=manager
     )
-    # doc_chain = load_qa_chain(
-    #     streaming_llm, chain_type="stuff", prompt=prompt, callback_manager=manager
-    # )
+    doc_chain = load_qa_chain(
+        streaming_llm, chain_type="stuff", prompt=QA_PROMPT, callback_manager=manager
+    )
 
-    # qa = ChatVectorDBChain(
-    #     vectorstore=vectorstore,
-    #     combine_docs_chain=doc_chain,
-    #     question_generator=question_generator,
-    #     callback_manager=manager,
-    # )
-    return question_generator
+    qa = ChatVectorDBChain(
+        vectorstore=vectorstore,
+        combine_docs_chain=doc_chain,
+        question_generator=question_generator,
+        callback_manager=manager,
+    )
+    return qa
