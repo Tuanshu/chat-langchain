@@ -1,5 +1,6 @@
 """Main entrypoint for the app."""
 import logging
+import os
 import pickle
 from pathlib import Path
 from typing import Optional
@@ -11,6 +12,10 @@ from langchain.vectorstores import VectorStore
 from callback import QuestionGenCallbackHandler, StreamingLLMCallbackHandler
 from query_data import get_chain
 from schemas import ChatResponse
+
+# for text genereation webui
+os.environ["OPENAI_API_KEY"] = 'dummy'
+os.environ["OPENAI_API_BASE"] = 'http://localhost:5001/v1'
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
